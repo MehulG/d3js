@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script>
+  var requestURL = 'http://localhost:3000/rajyasabha';
+  var request = new XMLHttpRequest();
+  request.open('GET', requestURL);
+  request.responseType = 'json';
+  request.send();
+  let rsresponse;
+  let min = [];
+  let num_q = [];
+  request.onload = function(){
+    rsresponse = request.response;
+    const main = document.getElementById("main")
+    main.innerHTML = rsresponse[2].ministry;    
+    rsresponse.forEach(element => {
+      let new_min = element.ministry.toString();
+      if (!min.includes(new_min)) {
+        min.push(new_min);
+        num_q.push(0);       
+      } else{
+        num_q[min.indexOf(new_min)] += 1;
+      }
+    });
+    //drawgraph();
+  maketable();
+  }
+  function drawgraph() {
+
+    var svgWidth = 1000,
+                svgHeight = num_q.length * 20,
+                barPadding = 5;
+            var barHeight = (svgHeight / num_q.length);
+
+            var svg = d3.select('svg')
+                .attr('width', svgWidth)
+                .attr('height', svgHeight);
+
+            svg.selectAll('rect')
+                .data(num_q)
+                .enter()
+                .append('rect')
+                .attr("width", function(d) {
+                    return d;
+                })
+                .attr('x', function(d) {
+                    return svgWidth - d;
+                })
+                .attr('height', barHeight - barPadding)
+                .attr('transform', function(d, i) {
+                    var translate = [svgWidth, barHeight * (i + 1)];
+                    return 'translate(' + translate + ')' + 'rotate(180)';
+                }).attr("fill", "lightpink");
+            svg.selectAll('text')
+                .data(min)
+                .enter()
+                .append('text')
+                .text(function(d) {
+                    return d;
+                })
+                .attr('y', function(d, i) {
+                    return barHeight * (i + 1);
+                })
+                .attr('fill', "Darkred");
+
+   console.log(num_q);
+  }
+
+  function maketable() {
+    let ddown = document.getElementById("dropDown");
+    min.forEach(element => {
+      var opt = document.createElement('option');
+      opt.appendChild( document.createTextNode(element) );
+      opt.value = element;
+      ddown.appendChild(opt);  
+    });
+
+  }
+
+  function disptable(){
+
+    let selected = document.getElementById("dropDown").value;
+    console.log(selected);
+    let table = document.getElementById('mainTable');
+    table.innerHTML = "";
+    rsresponse.forEach(element => {
+      if (element.ministry == selected) {
+        let tr = document.createElement("tr");
+        addCell(tr, element.answer_date);
+        addCell(tr, element.question_no);
+        addCell(tr, element.question_by);
+        addCell(tr, element.question_title);
+
+        table.appendChild(tr);        
+      }
+    });
+  }
+
+  function addCell(tr,val) {
+    var td = document.createElement('td');
+    td.innerHTML = val;
+    tr.appendChild(td)
+  }
+  
+
+  </script>
+</head>
+<body>
+  <div id="main"></div>
+  <button onclick="drawgraph()"> show graph</button>
+
+  <select name="select" id="dropDown"></select>
+  <button onclick="disptable()"> Search</button>
+  <table id="mainTable"></table>
+  <svg></svg>
+
+</body>
+</html>
